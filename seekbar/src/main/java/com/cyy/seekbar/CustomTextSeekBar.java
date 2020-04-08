@@ -173,6 +173,13 @@ public class CustomTextSeekBar extends View {
 
     private Matrix matrix = new Matrix();
 
+    /**
+     * 自动定位到的刻度索引
+     */
+    private int index;
+
+    private OnSeekBarChangeListener listener;
+
     public CustomTextSeekBar(Context context) {
         this(context, null);
     }
@@ -195,7 +202,7 @@ public class CustomTextSeekBar extends View {
         buttonDrawable = attr.getDrawable(R.styleable.CustomTextSeekBar_buttonDrawable);
         textColor = attr.getColor(R.styleable.CustomTextSeekBar_textColor, Color.BLACK);
         textSize = attr.getDimension(R.styleable.CustomTextSeekBar_textSize, 30);
-        padding = attr.getDimension(R.styleable.CustomTextSeekBar_padding, 10);
+        padding = attr.getDimension(R.styleable.CustomTextSeekBar_padding, 0);
         autoLocation = attr.getBoolean(R.styleable.CustomTextSeekBar_autoLocation, true);
         attr.recycle();
         initView();
@@ -311,7 +318,13 @@ public class CustomTextSeekBar extends View {
                 }
                 if (autoLocation) {
                     setProgress();
+                } else {
+                    index = (int) distance;
                 }
+                if (listener != null) {
+                    listener.onProgressChanged(index);
+                }
+                invalidate();
                 break;
             default:
                 break;
@@ -323,9 +336,9 @@ public class CustomTextSeekBar extends View {
         for (int i = 0; i < TEXT_ARRAY.length; i++) {
             if (distance < (buttonDistance.get(i) + offset / 2) && distance > (buttonDistance.get(i) - offset / 2)) {
                 distance = buttonDistance.get(i);
+                index = i;
             }
         }
-        invalidate();
     }
 
     private void setup() {
@@ -408,5 +421,13 @@ public class CustomTextSeekBar extends View {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public void setOnSeekBarChangeListener(OnSeekBarChangeListener listener){
+        this.listener = listener;
+    }
+
+    public interface OnSeekBarChangeListener {
+        void onProgressChanged(int index);
     }
 }
