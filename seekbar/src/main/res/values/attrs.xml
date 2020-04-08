@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CustomTextSeekBar">
+        <attr name="progressHeight" format="dimension"/>
+        <attr name="progressWidth" format="dimension"/>
+        <attr name="progressColor" format="color" />
+        <attr name="progressDrawable" format="reference"/>
+        <attr name="circleButtonRadius" format="dimension"/>
+        <attr name="buttonHeight" format="dimension"/>
+        <attr name="buttonWidth" format="dimension"/>
+        <attr name="buttonColor" format="color" />
+        <attr name="buttonDrawable" format="reference"/>
+        <attr name="textColor" format="color"/>
+        <attr name="textSize" format="dimension"/>
+        <attr name="padding" format="dimension"/>
+        <attr name="autoLocation" format="boolean"/>
+    </declare-styleable>
+</resources>
