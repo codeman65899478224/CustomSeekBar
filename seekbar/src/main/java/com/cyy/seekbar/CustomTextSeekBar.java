@@ -1,5 +1,6 @@
 package com.cyy.seekbar;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -17,6 +18,7 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -144,6 +146,11 @@ public class CustomTextSeekBar extends View {
     private float distance;
 
     /**
+     * 一次move的总偏移
+     */
+    private float totalOffset;
+
+    /**
      * x方向的最小偏移
      */
     private float minDistance;
@@ -180,6 +187,8 @@ public class CustomTextSeekBar extends View {
 
     private OnSeekBarChangeListener listener;
 
+    private VelocityTracker velocityTracker;
+
     public CustomTextSeekBar(Context context) {
         this(context, null);
     }
@@ -193,7 +202,7 @@ public class CustomTextSeekBar extends View {
         TypedArray attr = context.obtainStyledAttributes(attrs, R.styleable.CustomTextSeekBar);
         progressColor = attr.getColor(R.styleable.CustomTextSeekBar_progressColor, Color.BLUE);
         progressHeight = attr.getDimension(R.styleable.CustomTextSeekBar_progressHeight, 60);
-        progressWidth = attr.getDimension(R.styleable.CustomTextSeekBar_progressWidth, 600);
+        progressWidth = attr.getDimension(R.styleable.CustomTextSeekBar_progressWidth, 1000);
         progressDrawable = attr.getDrawable(R.styleable.CustomTextSeekBar_progressDrawable);
         circleButtonColor = attr.getColor(R.styleable.CustomTextSeekBar_buttonColor, Color.WHITE);
         buttonHeight = attr.getDimension(R.styleable.CustomTextSeekBar_buttonHeight, 60);
@@ -228,7 +237,7 @@ public class CustomTextSeekBar extends View {
 
         progressRect = new RectF(0, 0, progressWidth, progressHeight);
         offset = (progressRect.width() - progressRect.height() - padding * 2) / (TEXT_ARRAY.length - 1);
-
+        Log.i(TAG, "text offset: " + offset);
     }
 
     @Override
@@ -254,6 +263,7 @@ public class CustomTextSeekBar extends View {
         }
 
         Log.i(TAG, "distance: " + distance);
+
         if (buttonBitmap != null) {
             canvas.drawBitmap(buttonBitmap, distance, 0, buttonPaint);
         } else {
@@ -283,6 +293,7 @@ public class CustomTextSeekBar extends View {
         }
         minDistance = buttonDistance.get(0);
         maxDistance = buttonDistance.get(TEXT_ARRAY.length - 1);
+        Log.i(TAG, "minDistance: " + minDistance + " maxDistance: " + maxDistance);
         distance = minDistance;
     }
 
@@ -290,16 +301,23 @@ public class CustomTextSeekBar extends View {
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getAction();
         float x = event.getX();
+        if (velocityTracker == null) {
+            velocityTracker = VelocityTracker.obtain();
+        }
+        velocityTracker.addMovement(event);
         switch (action) {
             case MotionEvent.ACTION_DOWN:
+                totalOffset = 0.0f;
                 break;
             case MotionEvent.ACTION_MOVE:
+                Log.i(TAG, "ACTION_MOVE");
                 if (!isMove) {
                     lastX = x;
                 }
                 isMove = true;
                 float offset = x - lastX;
-                Log.i(TAG, "distance: " + distance + " offset: " + offset);
+                totalOffset = totalOffset + offset;
+                Log.i(TAG, "offset: " + offset);
                 distance = distance + offset;
                 if (distance <= minDistance) {
                     distance = minDistance;
@@ -308,6 +326,7 @@ public class CustomTextSeekBar extends View {
                 }
 
                 if (distance <= maxDistance && distance >= minDistance) {
+                    //animateButton(currentDistance, distance);
                     invalidate();
                 }
                 lastX = x;
@@ -320,11 +339,11 @@ public class CustomTextSeekBar extends View {
                     setProgress();
                 } else {
                     index = (int) distance;
+                    invalidate();
                 }
                 if (listener != null) {
                     listener.onProgressChanged(index);
                 }
-                invalidate();
                 break;
             default:
                 break;
@@ -333,12 +352,26 @@ public class CustomTextSeekBar extends View {
     }
 
     private void setProgress() {
+        velocityTracker.computeCurrentVelocity(1);
+        float velocity = velocityTracker.getXVelocity();
+        Log.i(TAG, "velocity: " + velocity);
         for (int i = 0; i < TEXT_ARRAY.length; i++) {
             if (distance < (buttonDistance.get(i) + offset / 2) && distance > (buttonDistance.get(i) - offset / 2)) {
-                distance = buttonDistance.get(i);
-                index = i;
+                Log.i(TAG, "totalOffset: " + totalOffset);
+                if (Math.abs(velocity) > 0.1 && Math.abs(totalOffset) < offset / 2) {
+                    if (velocity > 0) {
+                        index = i >= TEXT_ARRAY.length - 1 ? TEXT_ARRAY.length - 1 : i + 1;
+                    } else {
+                        index = i <= 0 ? 0 : i - 1;
+                    }
+                } else {
+                    index = i;
+                }
             }
         }
+        distance = buttonDistance.get(index);
+        Log.i(TAG, "index: " + index + " distance: " + distance);
+        invalidate();
     }
 
     private void setup() {
@@ -423,7 +456,20 @@ public class CustomTextSeekBar extends View {
         }
     }
 
-    public void setOnSeekBarChangeListener(OnSeekBarChangeListener listener){
+    private void animateButton(float src, float dist) {
+        ValueAnimator animator = ValueAnimator.ofFloat(src, dist);
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                distance = (float) animation.getAnimatedValue();
+                Log.i(TAG, "distance: " + distance);
+                invalidate();
+            }
+        });
+        animator.start();
+    }
+
+    public void setOnSeekBarChangeListener(OnSeekBarChangeListener listener) {
         this.listener = listener;
     }
 
