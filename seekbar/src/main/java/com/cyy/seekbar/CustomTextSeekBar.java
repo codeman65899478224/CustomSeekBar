@@ -357,7 +357,6 @@ public class CustomTextSeekBar extends View {
                 }
 
                 if (distance <= maxDistance && distance >= minDistance) {
-                    //animateButton(currentDistance, distance);
                     invalidate();
                 }
                 lastX = x;
@@ -478,7 +477,7 @@ public class CustomTextSeekBar extends View {
                         .createBitmap(2, 2, Bitmap.Config.ARGB_8888);
             } else {
                 bitmap = Bitmap
-                        .createBitmap((int) progressWidth, (int) progressHeight,
+                        .createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicWidth(),
                                 Bitmap.Config.ARGB_8888);
             }
 
