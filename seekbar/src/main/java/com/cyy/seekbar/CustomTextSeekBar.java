@@ -477,7 +477,7 @@ public class CustomTextSeekBar extends View {
                         .createBitmap(2, 2, Bitmap.Config.ARGB_8888);
             } else {
                 bitmap = Bitmap
-                        .createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicWidth(),
+                        .createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(),
                                 Bitmap.Config.ARGB_8888);
             }
 
