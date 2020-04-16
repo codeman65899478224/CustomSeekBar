@@ -34,7 +34,7 @@ public class CustomTextSeekBar extends View {
     /**
      * 刻度文本
      */
-    private static final String[] TEXT_ARRAY = {"2s", "4s", "6s", "8s", "10s"};
+    private String[] textArray = {"2s", "4s", "6s", "8s", "10s"};
 
     /**
      * 文本间距
@@ -236,14 +236,12 @@ public class CustomTextSeekBar extends View {
         buttonPaint.setStyle(Paint.Style.FILL);
 
         progressRect = new RectF(0, 0, progressWidth, progressHeight);
-        offset = (progressRect.width() - progressRect.height() - padding * 2) / (TEXT_ARRAY.length - 1);
-        Log.i(TAG, "text offset: " + offset);
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        textPaint.getTextBounds(TEXT_ARRAY[0], 0, TEXT_ARRAY[0].length(), mBounds);
+        textPaint.getTextBounds(textArray[0], 0, textArray[0].length(), mBounds);
         height = progressHeight + mBounds.height() + MARGIN;
         setMeasuredDimension((int) progressWidth + 1, (int) height + 1);
     }
@@ -258,8 +256,8 @@ public class CustomTextSeekBar extends View {
             canvas.drawRoundRect(progressRect, progressHeight / 2, progressHeight / 2, progressPaint);
         }
 
-        for (int i = 0; i < TEXT_ARRAY.length; i++) {
-            canvas.drawText(TEXT_ARRAY[i], textDistance.get(i), height, textPaint);
+        for (int i = 0; i < textArray.length; i++) {
+            canvas.drawText(textArray[i], textDistance.get(i), height, textPaint);
         }
 
         Log.i(TAG, "distance: " + distance);
@@ -272,6 +270,33 @@ public class CustomTextSeekBar extends View {
 
     }
 
+    public void setProgressColor(int color){
+        if (progressColor == color){
+            return;
+        }
+        if (progressPaint != null) {
+            progressPaint.setColor(color);
+        }
+        invalidate();
+    }
+
+    public void setCircleButtonColor(int color){
+        if (circleButtonColor == color){
+            return;
+        }
+        if (buttonPaint != null) {
+            buttonPaint.setColor(color);
+        }
+        invalidate();
+    }
+
+    public void setTextArray(List<String> textList){
+        textArray = new String[textList.size()];
+        textList.toArray(textArray);
+        requestLayout();
+        invalidate();
+    }
+
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
@@ -281,8 +306,10 @@ public class CustomTextSeekBar extends View {
     }
 
     private void initDistance() {
-        for (int i = 0; i < TEXT_ARRAY.length; i++) {
-            textPaint.getTextBounds(TEXT_ARRAY[i], 0, TEXT_ARRAY[i].length(), mBounds);
+        offset = (progressRect.width() - progressRect.height() - padding * 2) / (textArray.length - 1);
+        Log.i(TAG, "text offset: " + offset);
+        for (int i = 0; i < textArray.length; i++) {
+            textPaint.getTextBounds(textArray[i], 0, textArray[i].length(), mBounds);
             float x = offset * i + progressRect.height() / 2 - mBounds.width() / 2 + padding;
             textDistance.add(x);
             if (buttonBitmap != null) {
@@ -292,7 +319,7 @@ public class CustomTextSeekBar extends View {
             }
         }
         minDistance = buttonDistance.get(0);
-        maxDistance = buttonDistance.get(TEXT_ARRAY.length - 1);
+        maxDistance = buttonDistance.get(textArray.length - 1);
         Log.i(TAG, "minDistance: " + minDistance + " maxDistance: " + maxDistance);
         distance = minDistance;
     }
@@ -355,12 +382,12 @@ public class CustomTextSeekBar extends View {
         velocityTracker.computeCurrentVelocity(1);
         float velocity = velocityTracker.getXVelocity();
         Log.i(TAG, "velocity: " + velocity);
-        for (int i = 0; i < TEXT_ARRAY.length; i++) {
+        for (int i = 0; i < textArray.length; i++) {
             if (distance < (buttonDistance.get(i) + offset / 2) && distance > (buttonDistance.get(i) - offset / 2)) {
                 Log.i(TAG, "totalOffset: " + totalOffset);
                 if (Math.abs(velocity) > 0.1 && Math.abs(totalOffset) < offset / 2) {
                     if (velocity > 0) {
-                        index = i >= TEXT_ARRAY.length - 1 ? TEXT_ARRAY.length - 1 : i + 1;
+                        index = i >= textArray.length - 1 ? textArray.length - 1 : i + 1;
                     } else {
                         index = i <= 0 ? 0 : i - 1;
                     }

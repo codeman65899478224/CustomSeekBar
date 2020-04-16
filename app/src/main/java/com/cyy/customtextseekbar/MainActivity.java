@@ -6,6 +6,9 @@ import android.util.Log;
 
 import com.cyy.seekbar.CustomTextSeekBar;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -14,6 +17,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         CustomTextSeekBar seekBar = findViewById(R.id.seekbar);
+        List<String> list = new ArrayList<>();
+        list.add("2");
+        list.add("2");
+        list.add("1");
+        list.add("1");
+        seekBar.setTextArray(list);
         seekBar.setOnSeekBarChangeListener(new CustomTextSeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(int index) {
