@@ -335,7 +335,11 @@ public class CustomTextSeekBar extends View {
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 totalOffset = 0.0f;
-                break;
+                if (canMove(x)) {
+                    break;
+                } else {
+                    return false;
+                }
             case MotionEvent.ACTION_MOVE:
                 Log.i(TAG, "ACTION_MOVE");
                 if (!isMove) {
@@ -376,6 +380,11 @@ public class CustomTextSeekBar extends View {
                 break;
         }
         return true;
+    }
+
+    private boolean canMove(float x) {
+        return x >= distance - (buttonBitmap != null ? buttonWidth / 2 : circleButtonRadius)
+                && x <= distance + (buttonBitmap != null ? buttonWidth / 2 : circleButtonRadius);
     }
 
     private void setProgress() {
