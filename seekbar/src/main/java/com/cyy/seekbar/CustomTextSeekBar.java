@@ -79,7 +79,7 @@ public class CustomTextSeekBar extends View {
     /**
      * 滑动按钮
      */
-    private RectF buttonRect;
+    private RectF buttonRect = new RectF();
 
     /**
      * 文本
@@ -178,7 +178,9 @@ public class CustomTextSeekBar extends View {
 
     private Bitmap buttonBitmap;
 
-    private Matrix matrix = new Matrix();
+    private Matrix buttonMatrix = new Matrix();
+
+    private Matrix progressMatrix = new Matrix();
 
     /**
      * 自动定位到的刻度索引
@@ -251,7 +253,7 @@ public class CustomTextSeekBar extends View {
         super.onDraw(canvas);
 
         if (progressBitmap != null) {
-            canvas.drawBitmap(progressBitmap, 0, 0, progressPaint);
+            canvas.drawBitmap(progressBitmap, progressMatrix, null);
         } else {
             canvas.drawRoundRect(progressRect, progressHeight / 2, progressHeight / 2, progressPaint);
         }
@@ -263,9 +265,9 @@ public class CustomTextSeekBar extends View {
         Log.i(TAG, "distance: " + distance);
 
         if (buttonBitmap != null) {
-            canvas.drawBitmap(buttonBitmap, distance, 0, buttonPaint);
+            canvas.drawBitmap(buttonBitmap, buttonMatrix, null);
         } else {
-            canvas.drawCircle(distance, progressHeight / 2, circleButtonRadius, buttonPaint);
+            canvas.drawCircle(distance, buttonWidth / 2, circleButtonRadius, buttonPaint);
         }
 
     }
@@ -310,13 +312,9 @@ public class CustomTextSeekBar extends View {
         Log.i(TAG, "text offset: " + offset);
         for (int i = 0; i < textArray.length; i++) {
             textPaint.getTextBounds(textArray[i], 0, textArray[i].length(), mBounds);
-            float x = offset * i + progressRect.height() / 2 - mBounds.width() / 2 + padding;
+            float x = offset * i + buttonWidth / 2 - mBounds.width() / 2 + padding;
             textDistance.add(x);
-            if (buttonBitmap != null) {
-                buttonDistance.add(x + mBounds.width() / 2 - buttonWidth / 2);
-            } else {
-                buttonDistance.add(x + mBounds.width() / 2);
-            }
+            buttonDistance.add(x + mBounds.width() / 2);
         }
         minDistance = buttonDistance.get(0);
         maxDistance = buttonDistance.get(textArray.length - 1);
@@ -347,6 +345,9 @@ public class CustomTextSeekBar extends View {
                 }
                 isMove = true;
                 float offset = x - lastX;
+                if (buttonBitmap != null) {
+                    buttonMatrix.postTranslate(offset, 0);
+                }
                 totalOffset = totalOffset + offset;
                 Log.i(TAG, "offset: " + offset);
                 distance = distance + offset;
@@ -382,8 +383,8 @@ public class CustomTextSeekBar extends View {
     }
 
     private boolean canMove(float x) {
-        return x >= distance - (buttonBitmap != null ? buttonWidth / 2 : circleButtonRadius)
-                && x <= distance + (buttonBitmap != null ? buttonWidth / 2 : circleButtonRadius);
+        return x >= distance - circleButtonRadius
+                && x <= distance + circleButtonRadius;
     }
 
     private void setProgress() {
@@ -404,6 +405,9 @@ public class CustomTextSeekBar extends View {
                 }
             }
         }
+        if (buttonBitmap != null) {
+            buttonMatrix.postTranslate(buttonDistance.get(index) - distance, 0);
+        }
         distance = buttonDistance.get(index);
         Log.i(TAG, "index: " + index + " distance: " + distance);
         invalidate();
@@ -419,45 +423,16 @@ public class CustomTextSeekBar extends View {
 
         buttonBitmap = getBitmap(buttonDrawable);
 
-        if (progressBitmap == null) {
-            Log.i(TAG, "progressBitmap == null");
-            invalidate();
-            return;
+        if (progressBitmap != null) {
+            Log.i(TAG, "progressBitmap != null");
+            progressMatrix.setScale(progressWidth / progressBitmap.getWidth(), progressHeight / progressBitmap.getHeight());
         }
 
-        BitmapShader progressBitmapShader = new BitmapShader(progressBitmap, Shader.TileMode.CLAMP, Shader
-                .TileMode.CLAMP);
-
-        float progressScale = Math.max(progressHeight / progressBitmap.getHeight(), progressWidth / progressBitmap.getWidth());
-        float dx, dy;
-        dx = (progressWidth - progressBitmap.getWidth() * progressScale) * 0.5f;
-        dy = (progressHeight - progressBitmap.getHeight() * progressScale) * 0.5f;
-
-        matrix.setScale(progressScale, progressScale);
-        matrix.postTranslate(dx, dy);
-        progressBitmapShader.setLocalMatrix(matrix);
-
-        progressPaint.setShader(progressBitmapShader);
-
-        if (buttonBitmap == null) {
-            Log.i(TAG, "buttonBitmap == null");
-            invalidate();
-            return;
+        if (buttonBitmap != null) {
+            Log.i(TAG, "buttonBitmap != null");
+            buttonMatrix.setScale(buttonWidth / buttonBitmap.getWidth(), buttonHeight / buttonBitmap.getHeight());
+            circleButtonRadius = Math.min(buttonWidth, buttonHeight);
         }
-
-        BitmapShader buttonBitmapShader = new BitmapShader(buttonBitmap, Shader.TileMode.CLAMP, Shader
-                .TileMode.CLAMP);
-
-        float buttonScale = Math.max(buttonHeight / buttonBitmap.getHeight(), buttonWidth / buttonBitmap.getWidth());
-        float sx, sy;
-        sx = (buttonWidth - buttonBitmap.getWidth() * buttonScale) * 0.5f;
-        sy = (buttonHeight - buttonBitmap.getHeight() * buttonScale) * 0.5f;
-
-        matrix.setScale(buttonScale, buttonScale);
-        matrix.postTranslate(sx, sy);
-        buttonBitmapShader.setLocalMatrix(matrix);
-
-        buttonPaint.setShader(buttonBitmapShader);
     }
 
     private Bitmap getBitmap(Drawable drawable) {
