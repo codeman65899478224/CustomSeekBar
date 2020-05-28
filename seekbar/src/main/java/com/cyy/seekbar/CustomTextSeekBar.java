@@ -238,6 +238,7 @@ public class CustomTextSeekBar extends View {
         buttonPaint.setStyle(Paint.Style.FILL);
 
         progressRect = new RectF(0, 0, progressWidth, progressHeight);
+        initDistance();
     }
 
     @Override
@@ -272,8 +273,8 @@ public class CustomTextSeekBar extends View {
 
     }
 
-    public void setProgressColor(int color){
-        if (progressColor == color){
+    public void setProgressColor(int color) {
+        if (progressColor == color) {
             return;
         }
         if (progressPaint != null) {
@@ -282,8 +283,8 @@ public class CustomTextSeekBar extends View {
         invalidate();
     }
 
-    public void setCircleButtonColor(int color){
-        if (circleButtonColor == color){
+    public void setCircleButtonColor(int color) {
+        if (circleButtonColor == color) {
             return;
         }
         if (buttonPaint != null) {
@@ -292,27 +293,27 @@ public class CustomTextSeekBar extends View {
         invalidate();
     }
 
-    public void setTextArray(List<String> textList){
+    public void setTextArray(List<String> textList) {
         textArray = new String[textList.size()];
         textList.toArray(textArray);
+        initDistance();
         requestLayout();
         invalidate();
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        Log.i(TAG, "onSizeChanged");
         super.onSizeChanged(w, h, oldw, oldh);
         setup();
-
-        initDistance();
     }
 
     private void initDistance() {
-        offset = (progressRect.width() - progressRect.height() - padding * 2) / (textArray.length - 1);
+        offset = (progressWidth - progressHeight - padding * 2) / (textArray.length - 1);
         Log.i(TAG, "text offset: " + offset);
         for (int i = 0; i < textArray.length; i++) {
             textPaint.getTextBounds(textArray[i], 0, textArray[i].length(), mBounds);
-            float x = offset * i + buttonWidth / 2 - mBounds.width() / 2 + padding;
+            float x = offset * i + (buttonBitmap != null ? buttonWidth / 2 : circleButtonRadius) - mBounds.width() / 2 + padding;
             textDistance.add(x);
             buttonDistance.add(x + mBounds.width() / 2);
         }
@@ -383,8 +384,18 @@ public class CustomTextSeekBar extends View {
     }
 
     private boolean canMove(float x) {
-        return x >= distance - circleButtonRadius
-                && x <= distance + circleButtonRadius;
+        return x >= distance - (buttonBitmap != null ? buttonWidth / 2 : circleButtonRadius)
+                && x <= distance + (buttonBitmap != null ? buttonWidth / 2 : circleButtonRadius);
+    }
+
+    /**
+     * 初始设置进度
+     * @param index
+     */
+    public void setProgress(int index){
+        distance = buttonDistance.get(index);
+        Log.i(TAG, "index: " + index + " distance: " + distance);
+        invalidate();
     }
 
     private void setProgress() {
@@ -392,17 +403,18 @@ public class CustomTextSeekBar extends View {
         float velocity = velocityTracker.getXVelocity();
         Log.i(TAG, "velocity: " + velocity);
         for (int i = 0; i < textArray.length; i++) {
-            if (distance < (buttonDistance.get(i) + offset / 2) && distance > (buttonDistance.get(i) - offset / 2)) {
-                Log.i(TAG, "totalOffset: " + totalOffset);
-                if (Math.abs(velocity) > 0.1 && Math.abs(totalOffset) < offset / 2) {
-                    if (velocity > 0) {
-                        index = i >= textArray.length - 1 ? textArray.length - 1 : i + 1;
-                    } else {
-                        index = i <= 0 ? 0 : i - 1;
-                    }
-                } else {
-                    index = i;
-                }
+            if (distance >= (buttonDistance.get(i) + offset / 2) || distance <= (buttonDistance.get(i) - offset / 2)) {
+                continue;
+            }
+            Log.i(TAG, "totalOffset: " + totalOffset);
+            if (Math.abs(velocity) <= 0.1 || Math.abs(totalOffset) >= offset / 2) {
+                index = i;
+                continue;
+            }
+            if (velocity > 0) {
+                index = i >= textArray.length - 1 ? textArray.length - 1 : i + 1;
+            } else {
+                index = i <= 0 ? 0 : i - 1;
             }
         }
         if (buttonBitmap != null) {
