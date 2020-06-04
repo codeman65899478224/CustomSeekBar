@@ -170,6 +170,11 @@ public class CustomTextSeekBar extends View {
      */
     private boolean autoLocation;
 
+    /**
+     * 是否可拖动
+     */
+    private boolean enableMove;
+
     private Drawable progressDrawable;
 
     private Drawable buttonDrawable;
@@ -215,6 +220,7 @@ public class CustomTextSeekBar extends View {
         textSize = attr.getDimension(R.styleable.CustomTextSeekBar_textSize, 30);
         padding = attr.getDimension(R.styleable.CustomTextSeekBar_padding, 0);
         autoLocation = attr.getBoolean(R.styleable.CustomTextSeekBar_autoLocation, true);
+        enableMove = attr.getBoolean(R.styleable.CustomTextSeekBar_enableMove, true);
         attr.recycle();
         initView();
     }
@@ -334,13 +340,16 @@ public class CustomTextSeekBar extends View {
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 totalOffset = 0.0f;
-                if (canMove(x)) {
+                if (canMove(x) || onClickIndex(x)) {
                     break;
                 } else {
                     return false;
                 }
             case MotionEvent.ACTION_MOVE:
                 Log.i(TAG, "ACTION_MOVE");
+                if (!enableMove){
+                    break;
+                }
                 if (!isMove) {
                     lastX = x;
                 }
@@ -364,6 +373,13 @@ public class CustomTextSeekBar extends View {
                 lastX = x;
                 break;
             case MotionEvent.ACTION_UP:
+                if (!enableMove){
+                    invalidate();
+                    if (listener != null) {
+                        listener.onProgressChanged(index);
+                    }
+                    break;
+                }
                 if (isMove) {
                     isMove = false;
                 }
@@ -383,9 +399,21 @@ public class CustomTextSeekBar extends View {
         return true;
     }
 
+    private boolean onClickIndex(float x) {
+        for (int i = 0; i < buttonDistance.size(); i++){
+            if (x >= buttonDistance.get(i) - circleButtonRadius
+                    && x <= buttonDistance.get(i) + circleButtonRadius){
+                distance = buttonDistance.get(i);
+                index = i;
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean canMove(float x) {
         return x >= distance - (buttonBitmap != null ? buttonWidth / 2 : circleButtonRadius)
-                && x <= distance + (buttonBitmap != null ? buttonWidth / 2 : circleButtonRadius);
+                && x <= distance + (buttonBitmap != null ? buttonWidth / 2 : circleButtonRadius) && enableMove;
     }
 
     /**

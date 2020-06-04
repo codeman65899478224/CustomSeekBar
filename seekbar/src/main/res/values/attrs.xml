@@ -14,5 +14,6 @@
         <attr name="textSize" format="dimension"/>
         <attr name="padding" format="dimension"/>
         <attr name="autoLocation" format="boolean"/>
+        <attr name="enableMove" format="boolean"/>
     </declare-styleable>
 </resources>
